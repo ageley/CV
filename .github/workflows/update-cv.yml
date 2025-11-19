@@ -1,0 +1,44 @@
+name: Update CV dates
+
+on:
+  schedule:
+    - cron: '1 0 1 * *'
+      timezone: 'Europe/Belgrade'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-cv
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the default branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+
+      - name: Update CV dates
+        run: java scripts/UpdateCv.java
+
+      - name: Commit changed dates
+        run: |
+          git config user.email "a.geley@gmail.com"
+          git config user.name "Andrei Gelei"
+          if git diff --quiet -- README.md; then
+            echo "README.md is already up to date"
+            exit 0
+          fi
+          git add README.md
+          git commit --amend -m "initial commit"
+          git push --force
